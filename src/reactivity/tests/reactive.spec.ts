@@ -1,4 +1,4 @@
-import { reactive } from "../reactive"
+import { reactive ,isReactive} from "../reactive"
 
 describe('reactive',()=>{
 

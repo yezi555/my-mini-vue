@@ -1,6 +1,7 @@
 import {extend} from '../shared' 
 
-
+let activeEffect;
+let shouldTrack;
 class ReactiveEffect{
   private _fn: any
   deps = [];
@@ -10,8 +11,19 @@ class ReactiveEffect{
     this._fn = fn
   }
   run(){
+
+    if(!this.active){
+      return  this._fn()
+    }
+
+    shouldTrack = true
     activeEffect = this;
-   return  this._fn()
+
+    const result =  this._fn();
+
+    shouldTrack = false
+    return result
+
   }
   stop(){
     if(this.active){
@@ -28,9 +40,10 @@ function clearnupEffect(effect:any){
   effect.deps.forEach((dep:any)=>{
     dep.delete(effect)
   })
+  effect.deps.length = 0
 }
 //触发依赖
-let activeEffect;
+
 
 const targetMap = new Map()
 export function track(target,key){
@@ -47,6 +60,8 @@ export function track(target,key){
     depsMap.set(key,dep)
   }
   if(!activeEffect) return
+  if(!shouldTrack) return
+
 
   dep.add(activeEffect);
   activeEffect.deps.push(dep)
