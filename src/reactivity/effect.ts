@@ -47,6 +47,8 @@ function clearnupEffect(effect:any){
 
 const targetMap = new Map()
 export function track(target,key){
+if(!isTracking()) return ;
+
   //target ->key ->dep
   let depsMap =  targetMap.get(target)
   if(!depsMap){
@@ -59,12 +61,12 @@ export function track(target,key){
     dep = new Set()
     depsMap.set(key,dep)
   }
-  if(!activeEffect) return
-  if(!shouldTrack) return
-
-
+  if(dep.has(activeEffect)) return;
   dep.add(activeEffect);
   activeEffect.deps.push(dep)
+}
+function isTracking(){
+  return shouldTrack && activeEffect !== undefined
 }
 
 //依赖收集
