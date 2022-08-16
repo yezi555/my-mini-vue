@@ -51,10 +51,9 @@ export const mutableHandlers = {
 
 export const readonlyHandlers = {
   get:readonlyGet,
-  set(target,key ,value){
-    const res = Reflect.set(target,key,value)
+  set(target,key ){
     console.warn(`key:${key} set 失败 因为 target 是 readonly`,target)
-    return res
+    return true
   }
 }
 
