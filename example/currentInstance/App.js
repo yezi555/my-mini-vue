@@ -3,7 +3,7 @@ import  { Foo } from './Foo.js'
 
 
 export const App = {
-  name:"App",
+  name:"Provider",
   render(){
     return h("div",{}, [h("div",{},"currentInstance demo"),h(Foo)]);
   },
