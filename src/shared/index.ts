@@ -6,7 +6,7 @@ export const isObject = (val:any)=>{
 }
 
 //
-export const hasChanged = (val,newValue)=>{
+export const hasChanged = (val:any,newValue:any)=>{
   return  !Object.is(val,newValue)
 }
 
@@ -26,3 +26,6 @@ export const  capitalize = (str:string)=>{
 export const toHandlerKey = (str:string)=>{
    return str ? `on${capitalize(str)}` :'';
   }
+
+
+export  const EMPTY_OBJ = {}

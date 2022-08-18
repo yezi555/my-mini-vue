@@ -2,32 +2,50 @@
 import { createRenderer } from '../runtime-core'
 
 function createElement(type:any){
-  console.log('createElement-------------')
+  // console.log('createElement-------------')
     return document.createElement(type);
 }
 
- function pathProp(el:any,key:any,val:any){
-  console.log('pathProp-------------')
+ function patchProp(el:any,key:any,prevVal:any, nextVal:any,){
+  // console.log('pathProp-------------')
 
    const isOn = (key:string) =>/^on[A-Z]/.test(key);
     if(isOn(key)){
       const event = key.slice(2).toLocaleLowerCase();
-      el.addEventListener(event,val)
+      el.addEventListener(event,nextVal)
     }else{
-      el.setAttribute(key, val)
+      if(nextVal === undefined || nextVal === null){
+        el.removeAttribute(key)
+      }else{
+        el.setAttribute(key, nextVal)
+      }
 
     }
 }
 
  function insert(el:any,parent:any){
-  console.log('insert-------------' ,parent)
+  // console.log('insert-------------' ,parent)
     parent.append(el);
+}
+
+function remove(child:any){
+  
+  const parent = child.parentNode;
+  if(parent){
+    parent.removeChild(child)
+  }
+}
+
+function setElementText(el:any,text:any){
+  el.textContent = text;
 }
 
 const render:any = createRenderer({
   createElement,
-  pathProp,
-  insert
+  patchProp,
+  insert,
+  remove,
+  setElementText
 })
 export function createApp(...args:any){
   return render.createApp(...args)
