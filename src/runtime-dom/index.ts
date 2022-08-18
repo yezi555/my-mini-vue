@@ -23,13 +23,13 @@ function createElement(type:any){
     }
 }
 
- function insert(el:any,parent:any){
+ function insert(child:any,parent:any,anchor:any){
   // console.log('insert-------------' ,parent)
-    parent.append(el);
+    // parent.append(child);
+    parent.insertBefore(child,anchor|| null)
 }
 
 function remove(child:any){
-  
   const parent = child.parentNode;
   if(parent){
     parent.removeChild(child)
