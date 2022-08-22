@@ -10,7 +10,7 @@ export function createRenderer(options: any) {
 
   const { 
     createElement: hostCreateElement,
-     patchProp: hostPathProp, 
+     patchProp: hostPatchProp, 
      insert: hostInsert,
      remove:hostRemove,
      setElementText:hostSetElementText
@@ -19,13 +19,13 @@ export function createRenderer(options: any) {
 
   function render(vnode: any, container: any,) {
     //
-    path(null, vnode, container, null,null)
+    patch(null, vnode, container, null,null)
   }
   //shapeFlags 
   //vnode ->flag
   //n1 -》旧节点
   //n2 -》新节点
-  function path(n1: any, n2: any, container: any, parentComponent: any,anthor:any) {
+  function patch(n1: any, n2: any, container: any, parentComponent: any,anthor:any) {
 
     //去处理组件  
     //判断vnode 是不是应该element
@@ -135,7 +135,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
       const n2 = c2[i];
 
       if(isSomeVNodeType(n1,n2)){
-        path(n1, n2, container, parentComponent,parentAnthor);
+        patch(n1, n2, container, parentComponent,parentAnthor);
       }else{
         break;
       }
@@ -148,7 +148,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
       const n1 = c1[e1];
       const n2 = c2[e2];
       if(isSomeVNodeType(n1,n2)){
-        path(n1, n2, container, parentComponent,parentAnthor);
+        patch(n1, n2, container, parentComponent,parentAnthor);
       }else{
         break;
       }
@@ -162,7 +162,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
         const nextPos = e2 + 1;
         const anthor = nextPos < l2 ? c2[nextPos].el :null ;
         while(i <= e2){
-          path(null, c2[i], container, parentComponent,anthor);
+          patch(null, c2[i], container, parentComponent,anthor);
           i++;
         }
 
@@ -170,10 +170,84 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
     }else if(i > e2){
       while(i <= e1){
        hostRemove(c1[i].el);
-       i++;
+       i++; 
       }
     }else{
-      //乱序
+
+      //中间对比
+      let s1 = i;
+      let s2 = i;
+      const toBePatched = e2 - s2 +1; 
+      let patched = 0;
+      const keyToNextIndexMap = new Map();
+      const newIndexToOldIndexMap = new Array(toBePatched);
+      let moved = false;
+      let maxNewIndexSpFar = 0;
+
+      for(let i = 0; i < toBePatched ;i++)newIndexToOldIndexMap[i] = 0;
+
+      for(let  i = s2;i <= e2; i++){
+        const nextChild = c2[i];
+        keyToNextIndexMap.set( nextChild.key,i);
+      }
+      
+
+      for(let i = s1;i <= e1; i++){
+        const prevChild = c1[i];
+
+        if(patched >= toBePatched){
+          hostRemove(prevChild.el);
+        }
+        let newIndex ;
+
+        if(prevChild.key !== null){
+           newIndex = keyToNextIndexMap.get(prevChild.key);
+        }else{
+
+          for(let j = s2; j <= e2; j++){
+            if(isSomeVNodeType(prevChild,c2[j])){
+              newIndex = j;
+
+              break;
+            }
+          }
+        }
+
+        if(newIndex === undefined){
+          hostRemove(prevChild.el);
+        }else{
+          if(newIndex >= maxNewIndexSpFar){
+            maxNewIndexSpFar = newIndex;
+          }else{
+            moved = true;
+          }
+
+          newIndexToOldIndexMap[newIndex -  s2] = i + 1;
+          patch(prevChild,c2[newIndex],container,parentComponent,null);
+          patched++;
+        }
+      }
+
+      const increasingNewIndexSequence =moved ? getSequence(newIndexToOldIndexMap):[];
+      let j = increasingNewIndexSequence.length - 1;
+      for(let i = toBePatched - 1; i >= 0; i--){
+        const nextIndex = i + s2;
+        const nextChild = c2[nextIndex];
+        const anchor = nextIndex + 1 <l2?c2[nextIndex + 1].el:null;
+
+        if(newIndexToOldIndexMap[i] === 0){
+
+          patch(null,nextChild,container,parentComponent,anchor);
+
+        }else if(moved){
+          if(j < 0 || i !== increasingNewIndexSequence[j]){
+            console.log('移动位置')
+            hostInsert(nextChild.el,container,anchor);
+          }else{
+            j--
+          }
+        }
+      }
     }
 }
 
@@ -194,14 +268,14 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
         const nextProp = newProps[key];
 
         if (prevProp !== nextProp) {
-          hostPathProp(el, key, prevProp, nextProp);
+          hostPatchProp(el, key, prevProp, nextProp);
         }
       }
 
       if(oldProps !== EMPTY_OBJ){
         for (const key in oldProps) {
           if (!(key in newProps)) {
-            hostPathProp(el, key, oldProps[key], null);
+            hostPatchProp(el, key, oldProps[key], null);
   
           }
         }
@@ -229,7 +303,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
     const { props } = vnode;
     for (const key in props) {
       const val = props[key];
-      hostPathProp(el, key, null, val);
+      hostPatchProp(el, key, null, val);
     }
     // container.append(el);
     hostInsert(el, container,anthor);
@@ -238,7 +312,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
 
   function mountChildren(children: any, container: any, parentComponent: any,anthor:any) {
     children.forEach((v: any) => {
-      path(null, v, container, parentComponent,anthor);
+      patch(null, v, container, parentComponent,anthor);
     })
   }
 
@@ -265,7 +339,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
         const { proxy } = instance
         const subTree = (instance.subTree = instance.render.call(proxy));
 
-        path(null, subTree, container, instance,anthor);
+        patch(null, subTree, container, instance,anthor);
         initialVNode.el = subTree.el;
 
         instance.isMounted = true;
@@ -276,7 +350,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
         const prevSubTree = instance.subTree;
         instance.subTree = subTree;
         // console.log('subTree',subTree,prevSubTree);
-        path(prevSubTree, subTree, container, instance,anthor);
+        patch(prevSubTree, subTree, container, instance,anthor);
 
       }
 
@@ -286,4 +360,46 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
   return {
     createApp: createAppAPI(render)
   }
+}
+
+
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice();
+  const result = [0];
+  let i, j, u, v, c;
+  const len = arr.length;
+  for (i = 0; i < len; i++) {
+    const arrI = arr[i];
+    if (arrI !== 0) {
+      j = result[result.length - 1];
+      if (arr[j] < arrI) {
+        p[i] = j;
+        result.push(i);
+        continue;
+      }
+      u = 0;
+      v = result.length - 1;
+      while (u < v) {
+        c = (u + v) >> 1;
+        if (arr[result[c]] < arrI) {
+          u = c + 1;
+        } else {
+          v = c;
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1];
+        }
+        result[u] = i;
+      }
+    }
+  }
+  u = result.length;
+  v = result[u - 1];
+  while (u-- > 0) {
+    result[u] = v;
+    v = p[v];
+  }
+  return result;
 }
