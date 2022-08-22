@@ -1,8 +1,10 @@
-import { effect } from "../reactivity/effect";
+import { effect ,} from "../reactivity/effect";
 import { EMPTY_OBJ } from "../shared";
 import { ShapeFlags } from "../shared/ShapeFlags";
 import { createComponentInstance, setupComponent } from "./component";
+import { shouldUpdateComponent } from "./componentUpdateUtils";
 import { createAppAPI } from "./createApp";
+import { queueJobs } from "./scheduler";
 import { Fragment, Text } from "./vnode";
 
 
@@ -317,8 +319,25 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
   }
 
   function processComponent(n1: any, n2: any, container: any, parentComponent: any,anthor:any) {
-    mountComponent(n2, container, parentComponent,anthor)
+    if(!n1){
+      mountComponent(n2, container, parentComponent,anthor)
+    }else[
+      updateComponent(n1,n2)
+    ]
   }
+
+  function updateComponent(n1:any,n2:any){
+    const instance = ( n2.component = n1.component) ;
+
+    if(shouldUpdateComponent(n1,n2)){
+      instance.next = n2;
+      instance.update()
+    }else{
+      n1.el = n2.el;
+      instance.vnode = n2;
+    }
+  }
+
 
   function mountComponent(initialVNode: any, container: any, parentComponent: any,anthor:any) {
     const instance = (initialVNode.component = createComponentInstance(
@@ -332,7 +351,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
 
   //生成虚拟节点
   function setupRenderEffect(instance: any, container: any, initialVNode: any,anthor:any) {
-    effect(() => {
+   instance.update =  effect(() => {
       if (!instance.isMounted) {
         console.log("init");
 
@@ -345,6 +364,14 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
         instance.isMounted = true;
       } else {
         console.log("update");
+
+        //需要一个更新完成之后的vnode；
+        const { next ,vnode } = instance;
+        if(next){
+          next.el = vnode.el;
+          updateComponentPreRender(instance,next);
+        }
+
         const { proxy } = instance
         const subTree = instance.render.call(proxy);
         const prevSubTree = instance.subTree;
@@ -354,12 +381,24 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
 
       }
 
+    },{
+      scheduler(){
+        console.log('update, - scheduler');
+        queueJobs(instance.update);
+      }
     })
 
   }
   return {
     createApp: createAppAPI(render)
   }
+}
+
+function updateComponentPreRender(instance:any,nextVNode:any){
+
+  instance.vnode = nextVNode;
+  instance.next = null;
+  instance.props = nextVNode.props;
 }
 
 

@@ -1,24 +1,52 @@
-import { h ,createTextVnode} from '../../lib/guide-mini-vue.esm.js'
-import  { Foo } from './Foo.js'
+import { h ,ref} from '../../lib/guide-mini-vue.esm.js'
+import Child from './Child.js'
 
 
 export const App = {
   name:"App",
-  render(){
-   const app = h("div",{},"App");
-   const foo = h(Foo,{} , {
-    header:({age})=>[
-      h("p",{}, "header " + age), 
-      createTextVnode("你好哈哈哈哈")
-    ],
-    footer:()=>h('p',{},'footer')
-  });
-
-   return h("div",{},[app,foo]);
-  },
   setup(){
-    return {
+    const msg = ref('123');
+    const count = ref(1);
+    window.msg = msg;
+    const changeChildProps = ()=>{
+      msg.value = '456';
+    };
 
+    const  changeCount = ()=>{
+      count.value++;
     }
-  }
+    return {
+      msg,
+      count,
+      changeChildProps,
+      changeCount
+    }
+  },
+  render(){
+   return h("div",{},[
+    h("div",{},"你好"),
+    h(
+      "button",
+      {
+        onClick:this.changeChildProps,
+      },
+      'change child.props'
+    ),
+    h(
+      Child,
+      {
+       msg:this.msg
+      },
+    ),
+    h(
+      "button",
+      {
+        onClick:this.changeCount,
+      },
+      'change self count'
+    ),
+    h('p',{},`count: ${this.count}`)
+   ]);
+  },
+  
 }
