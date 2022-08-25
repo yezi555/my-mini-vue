@@ -1,7 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`codegen element 1`] = `"/nreturnfunction render(_ctx,_cache){return}"`;
-
-exports[`codegen interpolation 1`] = `"const {  } = Vue/nreturnfunction render(_ctx,_cache){return__toDisplayString(_ctx.message)}"`;
-
-exports[`codegen string 1`] = `"/nreturnfunction render(_ctx,_cache){returnhi}"`;

@@ -1,3 +1,5 @@
+export *  from'./toDisplayString'
+
 export const extend = Object.assign;
 
 //
@@ -9,6 +11,9 @@ export const isObject = (val:any)=>{
 export const hasChanged = (val:any,newValue:any)=>{
   return  !Object.is(val,newValue)
 }
+
+
+export const isString = (value:any)=>typeof value === 'string'
 
 //检测对象是否有否个属性
 export   const hasOwn = (val:any,key:any)=>Object.prototype.hasOwnProperty.call(val,key);

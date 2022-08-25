@@ -1,5 +1,6 @@
+import { isString } from "../../shared";
 import { NodeTypes } from "./ats";
-import { helperMapName, TO_DISPLAY_STRING } from "./runtimeHelpers";
+import { CREARE_ELEMENT_VNODE, helperMapName, TO_DISPLAY_STRING } from "./runtimeHelpers";
 
 
 
@@ -61,9 +62,59 @@ function genNode(node:any,context:any){
     case NodeTypes.SIMPLE_EXPRESSION:
       genExpression(node,context);
       break;
+    case NodeTypes.ELEMENT:
+      genElement(node,context);
+      break;
+    case NodeTypes.COMPOUND_EXPRESSION:
+      genCompoundExpression(node,context);
+      break;
     default:
       break;
   }
+}
+
+function genCompoundExpression(node: any, context: any) {
+  const { push } = context;
+  const children = context.children
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    if(isString(child)){
+      push(child);
+    }else{
+      genNode(child,context)
+    }
+  }
+}
+
+
+function genElement(node: any,context: any){
+  const { push,helper} = context;
+  const { tag,children ,props } = node;
+  console.log('genElement',children);
+  const child = children[0]
+  push(`${helper(CREARE_ELEMENT_VNODE)} ("${tag}"), ${props},`);
+  genNodeList(genNullLable([tag,props,children]),context) ;
+  genNode(children,context);
+  push(')')
+}
+
+function genNodeList(nodes:any,context:any){
+  const { push } =  context;
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    if(isString(node)){
+      push(node)
+    }else{
+      genNode(node,context);
+    }
+    if(i < nodes.length -1){
+      push(',')
+    }
+  }
+}
+
+function genNullLable(args:any){
+ return args.map((arg)=> arg || "null")
 }
 
 function genExpression(node: any,context: any){

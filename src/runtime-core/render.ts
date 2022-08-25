@@ -356,7 +356,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
         console.log("init");
 
         const { proxy } = instance
-        const subTree = (instance.subTree = instance.render.call(proxy));
+        const subTree = (instance.subTree = instance.render.call(proxy,proxy));
 
         patch(null, subTree, container, instance,anthor);
         initialVNode.el = subTree.el;
@@ -373,7 +373,7 @@ function patchKeyedChildren(c1:any,c2:any,container:any,parentComponent:any,pare
         }
 
         const { proxy } = instance
-        const subTree = instance.render.call(proxy);
+        const subTree = instance.render.call(proxy,proxy);
         const prevSubTree = instance.subTree;
         instance.subTree = subTree;
         // console.log('subTree',subTree,prevSubTree);

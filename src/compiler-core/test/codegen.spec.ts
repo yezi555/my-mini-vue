@@ -3,6 +3,7 @@ import { generate } from "../src/codegen"
 import { transform } from "../src/transform";
 import { transformExpression } from "../src/transform/transformExpression";
 import { transformEelement } from "../src/transform/transformElement";
+import { transformText } from "../src/transform/transformText";
 
 
 
@@ -35,13 +36,14 @@ describe('codegen',()=>{
     });
     
     it("element",()=>{
-      const ast = baseParse('<div></div>');
+      const ast:any = baseParse('<div>hi,{{message}}</div>');
       transform(ast,{
-        nodeTransforms:[transformEelement]
+        nodeTransforms:[transformExpression,transformEelement,transformText]
       });
 
+      console.log('ast------',ast,ast.codegenNode.children);
+      
       const {code} = generate(ast);
-
       //快照
       //1.抓bug
       //2.有意
